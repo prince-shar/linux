@@ -1540,7 +1540,6 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 			printk(KERN_INFO "EXIT Code passed from cli !! %u", ecx);
 			eax = atomic_read(&total_exits_per_code[ecx]);
 			printk(KERN_INFO "Count %u", eax);
-			//ebx = ecx = edx = 0;
 		}
 		
 	}
@@ -1558,7 +1557,6 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
                 else {
 			printk(KERN_INFO "EXIT Code passed from cli !! %u", ecx);
 			ct = atomic64_read(&total_time_spent_per_code[ecx]);
-			// printk(KERN_INFO "Count %u", total_time_spent_per_code[ecx]);
 			ebx = (u32)((ct >> 32) & 0xffffffff);
                 	ecx = (u32)ct&0xffffffff;
 			printk(KERN_INFO "EBX Register Higher 32-bits %u", ebx);
