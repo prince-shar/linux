@@ -6275,13 +6275,17 @@ void dump_vmcs(struct kvm_vcpu *vcpu)
 		pr_err("Virtual processor ID = 0x%04x\n",
 		       vmcs_read16(VIRTUAL_PROCESSOR_ID));
 }
-
+extern atomic_t exits_count;
+extern atomic64_t cycles_count;
 /*
  * The guest has exited.  See if we can fix it or if we need userspace
  * assistance.
  */
 static int __vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 {
+        uint64_t start_ts_count, end_ts_count;
+	int exit_handler_status;
+
 	struct vcpu_vmx *vmx = to_vmx(vcpu);
 	union vmx_exit_reason exit_reason = vmx->exit_reason;
 	u32 vectoring_info = vmx->idt_vectoring_info;
@@ -6443,8 +6447,12 @@ static int __vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 						kvm_vmx_max_exit_handlers);
 	if (!kvm_vmx_exit_handlers[exit_handler_index])
 		goto unexpected_vmexit;
-
-	return kvm_vmx_exit_handlers[exit_handler_index](vcpu);
+        arch_atomic_inc(&exits_count);
+	start_ts_count = rdtsc();
+	exit_handler_status = kvm_vmx_exit_handlers[exit_handler_index](vcpu);
+	end_ts_count = rdtsc();
+	arch_atomic64_add((end_ts_count - start_ts_count), &cycles_count);
+	return exit_handler_status;
 
 unexpected_vmexit:
 	vcpu_unimpl(vcpu, "vmx: unexpected exit reason 0x%x\n",
